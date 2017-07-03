@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskService", "TaskService\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimerTaskService", "TimerTaskService\TimerTaskService.csproj", "{2688E809-5D64-44C6-9CE6-A2283B9602F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsTask", "WindowsTask\WindowsTask.csproj", "{EF2D1E3C-8075-4624-8C4E-D80F7ABDC725}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{2688E809-5D64-44C6-9CE6-A2283B9602F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2688E809-5D64-44C6-9CE6-A2283B9602F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2688E809-5D64-44C6-9CE6-A2283B9602F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EF2D1E3C-8075-4624-8C4E-D80F7ABDC725}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EF2D1E3C-8075-4624-8C4E-D80F7ABDC725}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EF2D1E3C-8075-4624-8C4E-D80F7ABDC725}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EF2D1E3C-8075-4624-8C4E-D80F7ABDC725}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
