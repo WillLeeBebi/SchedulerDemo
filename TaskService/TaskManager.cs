@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentScheduler;
 
 namespace TaskService
 {
@@ -12,14 +7,13 @@ namespace TaskService
 
         public static void StartTask()
         {
-            TaskTest test = new TaskTest();
-            test.Init();
+            TaskTest.Instance.Init();
             Console.ReadLine();
         }
 
         public static void StopTask()
         {
-            JobManager.Stop();
+            TaskTest.Instance.Stop();
         }
 
         public static void AddTask()

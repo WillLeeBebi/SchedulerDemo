@@ -10,27 +10,77 @@ namespace TaskService
 {
     public class TaskTest
     {
-        private List<TaskModel> _taskList = null;  
-        
+        private static TaskTest _taskTest;
+
+        public static TaskTest Instance
+        {
+            get
+            {
+                if (_taskTest == null)
+                {
+                    _taskTest = new TaskTest();
+                }
+                return _taskTest;
+            }
+        }
+
         public void Init()
         {
-            GetTaskList();
             Registry reg = new Registry();
-            if (_taskList.Any())
+            Dictionary<TaskModel, Action> dic = GetTaskList();
+            if (dic.Any())
             {
-                foreach (var taskModel in _taskList)
+                foreach (var item in dic)
                 {
-                    // 从当前时间开始执行，然后每隔指定时间运行
-                    reg.Schedule(() => InvokeMethod(taskModel.AssemblyPath, taskModel.Namespace, taskModel.Method)).ToRunNow().AndEvery(taskModel.IntervalTime).Seconds();
-                    if (taskModel.Type == 2)
+                    DateTime excuteTime;
+                    if (string.IsNullOrWhiteSpace(item.Key.ExcuteTime))
                     {
-                        // 从指定时间开始执行，然后每隔指定时间运行
-                        if (taskModel.ExcuteTime == null)
+                        excuteTime = DateTime.Now;
+                    }
+                    else
+                    {
+                        if (DateTime.TryParse(item.Key.ExcuteTime, out excuteTime))
                         {
-                            taskModel.ExcuteTime = DateTime.Now.AddMinutes(2);
+                            excuteTime = DateTime.Now;
                         }
-                        reg.Schedule(() => InvokeMethod(taskModel.AssemblyPath, taskModel.Namespace, taskModel.Method))
-                            .ToRunOnceAt(taskModel.ExcuteTime.Value).AndEvery(taskModel.IntervalTime).Seconds();
+                    }
+
+                    switch (item.Key.Type)
+                    {
+                        case TaskExccuteType.OnceTime:
+                            reg.Schedule(() => item.Value()).ToRunOnceAt(excuteTime);
+                            break;
+                        case TaskExccuteType.IntervalSecond:
+
+                            int seconds;
+                            if (int.TryParse(item.Key.IntervalTime, out seconds))
+                            {
+                                reg.Schedule(() => item.Value()).ToRunOnceAt(excuteTime).AndEvery(seconds).Seconds();
+                            }
+                            break;
+                        case TaskExccuteType.IntervalHour:
+                            int hour;
+                            if (int.TryParse(item.Key.IntervalTime, out hour))
+                            {
+                                reg.Schedule(() => item.Value()).ToRunOnceAt(excuteTime).AndEvery(hour).Hours();
+                            }
+                            break;
+                        case TaskExccuteType.IntervalDay:
+                            int day;
+                            if (int.TryParse(item.Key.IntervalTime, out day))
+                            {
+                                reg.Schedule(() => item.Value()).ToRunOnceAt(excuteTime).AndEvery(day).Days();
+                            }
+                            break;
+                        case TaskExccuteType.SpecifyTime:
+                            int specifyDay;
+                            if (!int.TryParse(item.Key.IntervalTime, out specifyDay))
+                            {
+                                specifyDay = 1;
+                            }
+                            DateTime time = Convert.ToDateTime(item.Key.ExcuteTime);
+                            reg.Schedule(() => item.Value()).ToRunEvery(specifyDay).Days().At(time.Hour, time.Minute);
+                            break;
                     }
                 }
             }
@@ -38,35 +88,44 @@ namespace TaskService
             JobManager.Initialize(reg);
         }
 
-        private void GetTaskList()
+        public void Stop()
         {
-            string path = AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "Task.json";
+            JobManager.Stop();
+        }
+
+        private Dictionary<TaskModel, Action> GetTaskList()
+        {
+            //string path = AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "Task.json";
+            string path = AppDomain.CurrentDomain.BaseDirectory + "Task.json";
             string result = File.ReadAllText(path);
             var list = JsonConvert.DeserializeObject<List<TaskModel>>(result);
-            _taskList = list;
-        }
-
-        private void InvokeMethod(string assemblyPath, string nameSpace, string method)
-        {
-            Assembly assembly = Assembly.LoadFrom(AppDomain.CurrentDomain.BaseDirectory + assemblyPath);
-            Type type = assembly.GetType(nameSpace);
-            object obj = Activator.CreateInstance(type);
-            MethodInfo mi = type.GetMethod(method, BindingFlags.Instance | BindingFlags.Public);
-
-            if (mi != null)
+            Dictionary<TaskModel, Action> dic = new Dictionary<TaskModel, Action>();
+            if (list != null && list.Any())
             {
-                mi.Invoke(obj, null);
+                foreach (var taskModel in list)
+                {
+                    Assembly assembly = Assembly.LoadFrom(AppDomain.CurrentDomain.BaseDirectory + taskModel.AssemblyPath);
+                    Type type = assembly.GetType(taskModel.Namespace);
+                    MethodInfo methodInfo = type.GetMethod(taskModel.Method, BindingFlags.Instance | BindingFlags.Public);
+                    Action action = () => InvokeMethod(methodInfo, type);
+                    dic.Add(taskModel, action);
+                }
             }
+            return dic;
         }
-    }
 
-    public class Task1 : IJob
-    {
-        public void Execute()
+        /// <summary>
+        /// 执行具体任务操作
+        /// </summary>
+        /// <param name="methodInfo"></param>
+        /// <param name="type"></param>
+        private void InvokeMethod(MethodInfo methodInfo, Type type)
         {
-            Console.WriteLine("--------------任务2开始----------");
-            Console.WriteLine(DateTime.Now);
-            Console.WriteLine("--------------任务2结束----------");
+            object obj = Activator.CreateInstance(type);
+            if (methodInfo != null)
+            {
+                methodInfo.Invoke(obj, null);
+            }
         }
     }
 }
